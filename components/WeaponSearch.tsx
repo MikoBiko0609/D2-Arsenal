@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { loadWeaponSearchData } from "@/lib/clientWeaponData";
 
 type FilterKey =
   | "barrelPerks"
@@ -156,6 +158,7 @@ function weaponMatchesFilter(weapon: Weapon, filter: FilterDefinition, values: s
 }
 
 export default function WeaponSearch() {
+  const router = useRouter();
   const [weapons, setWeapons] = useState<Weapon[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -163,6 +166,8 @@ export default function WeaponSearch() {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
   const [open, setOpen] = useState(false);
+  const [navigatingHash, setNavigatingHash] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -170,13 +175,7 @@ export default function WeaponSearch() {
       try {
         setLoading(true);
         setError("");
-        const response = await fetch("/api/weapons", { cache: "no-store" });
-
-        if (!response.ok) {
-          throw new Error("Failed to load weapons.");
-        }
-
-        const data = await response.json();
+        const data = await loadWeaponSearchData<Weapon[]>();
         setWeapons(data);
       } catch (loadError) {
         setError(
@@ -191,6 +190,26 @@ export default function WeaponSearch() {
 
     loadWeapons();
   }, []);
+
+  useEffect(() => {
+    function handlePointerDown(event: PointerEvent) {
+      if (!open) return;
+      const target = event.target;
+
+      if (
+        target instanceof Node &&
+        containerRef.current &&
+        !containerRef.current.contains(target)
+      ) {
+        setOpen(false);
+        setActiveFilter(null);
+        inputRef.current?.blur();
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [open]);
 
   const selectedFilterCount = FILTERS.reduce(
     (total, filter) => total + filters[filter.key].length,
@@ -304,7 +323,7 @@ export default function WeaponSearch() {
   }
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <div
         role="button"
         tabIndex={0}
@@ -474,59 +493,84 @@ export default function WeaponSearch() {
 
                 {!loading &&
                   !error &&
-                  filteredWeapons.map((weapon) => (
-                    <Link
-                      href={`/weapon/${weapon.hash}`}
-                      key={weapon.hash}
-                      className="flex items-center gap-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4 shadow-lg shadow-black/20 transition hover:border-sky-500/70 hover:bg-zinc-800"
-                    >
-                      <img
-                        src={weapon.icon}
-                        alt={weapon.name}
-                        className="h-12 w-12 rounded bg-zinc-800"
-                      />
+                  filteredWeapons.map((weapon) => {
+                    const isNavigating = navigatingHash === weapon.hash;
+                    const href = `/weapon/${weapon.hash}`;
 
-                      <div className="min-w-0 flex-1">
-                        <h3 className="truncate font-bold">{weapon.name}</h3>
-                        <p className="text-sm text-zinc-400">
-                          {weapon.tier} {weapon.type}
-                          {weapon.element && ` - ${weapon.element}`}
-                          {weapon.ammoType && ` - ${weapon.ammoType}`}
-                        </p>
-                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                          {weapon.archetype && !weapon.isExotic && (
-                            <span className="rounded bg-zinc-800 px-2 py-1 text-zinc-300">
-                              {weapon.archetype}
+                    return (
+                      <Link
+                        href={href}
+                        key={weapon.hash}
+                        onMouseEnter={() => router.prefetch(href)}
+                        onFocus={() => router.prefetch(href)}
+                        onClick={() => {
+                          setNavigatingHash(weapon.hash);
+                          setOpen(false);
+                        }}
+                        className={`relative flex items-center gap-4 rounded-xl border p-4 shadow-lg shadow-black/20 transition ${
+                          isNavigating
+                            ? "border-sky-400 bg-sky-500/15"
+                            : "border-zinc-800 bg-zinc-900 hover:border-sky-500/70 hover:bg-zinc-800"
+                        }`}
+                        aria-busy={isNavigating}
+                      >
+                        <img
+                          src={weapon.icon}
+                          alt={weapon.name}
+                          className="h-12 w-12 rounded bg-zinc-800"
+                        />
+
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate font-bold">{weapon.name}</h3>
+                          <p className="text-sm text-zinc-400">
+                            {weapon.tier} {weapon.type}
+                            {weapon.element && ` - ${weapon.element}`}
+                            {weapon.ammoType && ` - ${weapon.ammoType}`}
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                            {weapon.archetype && !weapon.isExotic && (
+                              <span className="rounded bg-zinc-800 px-2 py-1 text-zinc-300">
+                                {weapon.archetype}
+                              </span>
+                            )}
+                            {weapon.originTraits.slice(0, 2).map((origin) => (
+                              <span
+                                key={origin}
+                                className="rounded bg-cyan-500/10 px-2 py-1 text-cyan-200"
+                              >
+                                {origin}
+                              </span>
+                            ))}
+                            {weapon.isExotic && (
+                              <span className="rounded bg-amber-500/10 px-2 py-1 text-amber-200">
+                                Exotic
+                              </span>
+                            )}
+                            {!weapon.hasEnhancedPerks && !weapon.isExotic && (
+                              <span className="rounded bg-zinc-800 px-2 py-1 text-zinc-500">
+                                Not enhanceable
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {weapon.hasEnhancedPerks && (
+                            <span className="rounded bg-yellow-500/20 px-2 py-1 text-xs font-semibold text-yellow-200">
+                              Enhanceable
                             </span>
                           )}
-                          {weapon.originTraits.slice(0, 2).map((origin) => (
-                            <span
-                              key={origin}
-                              className="rounded bg-cyan-500/10 px-2 py-1 text-cyan-200"
-                            >
-                              {origin}
-                            </span>
-                          ))}
-                          {weapon.isExotic && (
-                            <span className="rounded bg-amber-500/10 px-2 py-1 text-amber-200">
-                              Exotic
-                            </span>
-                          )}
-                          {!weapon.hasEnhancedPerks && !weapon.isExotic && (
-                            <span className="rounded bg-zinc-800 px-2 py-1 text-zinc-500">
-                              Not enhanceable
+
+                          {isNavigating && (
+                            <span className="flex items-center gap-2 rounded bg-sky-500/20 px-2 py-1 text-xs font-semibold text-sky-100">
+                              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-sky-100/30 border-t-sky-100" />
+                              Loading
                             </span>
                           )}
                         </div>
-                      </div>
-
-                      {weapon.hasEnhancedPerks && (
-                        <span className="rounded bg-yellow-500/20 px-2 py-1 text-xs font-semibold text-yellow-200">
-                          Enhanceable
-                        </span>
-                      )}
-                    </Link>
-                  ))}
+                      </Link>
+                    );
+                  })}
 
                 {!loading && !error && filteredWeapons.length === 0 && (
                   <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-zinc-400">

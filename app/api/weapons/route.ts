@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getManifest } from "@/lib/bungie";
+import { getManifestComponent } from "@/lib/bungie";
 
 const BUNGIE_BASE = "https://www.bungie.net";
 
@@ -446,26 +446,17 @@ function buildWeaponResult(
 
 export async function GET() {
   try {
-    const manifest = await getManifest();
-    const paths = manifest.Response.jsonWorldComponentContentPaths.en;
-
-    const [itemResponse, plugSetResponse, damageResponse] = await Promise.all([
-      fetch(`${BUNGIE_BASE}${paths.DestinyInventoryItemDefinition}`, {
-        cache: "no-store",
-      }),
-      fetch(`${BUNGIE_BASE}${paths.DestinyPlugSetDefinition}`, {
-        cache: "no-store",
-      }),
-      fetch(`${BUNGIE_BASE}${paths.DestinyDamageTypeDefinition}`, {
-        cache: "no-store",
-      }),
+    const [items, plugSets, damageTypes] = await Promise.all([
+      getManifestComponent<Record<string, DestinyItem>>(
+        "DestinyInventoryItemDefinition"
+      ),
+      getManifestComponent<Record<string, PlugSetDefinition>>(
+        "DestinyPlugSetDefinition"
+      ),
+      getManifestComponent<Record<string, DamageTypeDefinition>>(
+        "DestinyDamageTypeDefinition"
+      ),
     ]);
-
-    const items = (await itemResponse.json()) as Record<string, DestinyItem>;
-    const plugSets =
-      (await plugSetResponse.json()) as Record<string, PlugSetDefinition>;
-    const damageTypes =
-      (await damageResponse.json()) as Record<string, DamageTypeDefinition>;
 
     const weapons = Object.values(items)
       .filter((item) => {

@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { loadWeaponSearchData } from "@/lib/clientWeaponData";
 
 type Weapon = {
   hash: number;
@@ -17,21 +19,19 @@ type Weapon = {
 };
 
 export default function NewestWeapons() {
+  const router = useRouter();
   const [weapons, setWeapons] = useState<Weapon[]>([]);
   const [loading, setLoading] = useState(true);
+  const [navigatingHash, setNavigatingHash] = useState<number | null>(null);
 
   useEffect(() => {
     async function loadWeapons() {
       try {
         setLoading(true);
-        const response = await fetch("/api/weapons", { cache: "no-store" });
-
-        if (!response.ok) {
-          return;
-        }
-
-        const data = (await response.json()) as Weapon[];
+        const data = await loadWeaponSearchData<Weapon[]>();
         setWeapons(data);
+      } catch {
+        setWeapons([]);
       } finally {
         setLoading(false);
       }
@@ -94,29 +94,45 @@ export default function NewestWeapons() {
                 className="h-20 animate-pulse rounded-xl border border-zinc-800 bg-zinc-900/70"
               />
             ))
-          : newestWeapons.map((weapon) => (
-              <Link
-                key={weapon.hash}
-                href={`/weapon/${weapon.hash}`}
-                className="flex min-h-20 items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-3 shadow-lg shadow-black/20 transition hover:border-sky-500/70 hover:bg-zinc-800"
-              >
-                <img
-                  src={weapon.icon}
-                  alt={weapon.name}
-                  className="h-10 w-10 rounded bg-zinc-800"
-                />
-                <div className="min-w-0">
-                  <div className="truncate font-bold text-zinc-100">
-                    {weapon.name}
+          : newestWeapons.map((weapon) => {
+              const href = `/weapon/${weapon.hash}`;
+              const isNavigating = navigatingHash === weapon.hash;
+
+              return (
+                <Link
+                  key={weapon.hash}
+                  href={href}
+                  onMouseEnter={() => router.prefetch(href)}
+                  onFocus={() => router.prefetch(href)}
+                  onClick={() => setNavigatingHash(weapon.hash)}
+                  className={`flex min-h-20 items-center gap-3 rounded-xl border p-3 shadow-lg shadow-black/20 transition ${
+                    isNavigating
+                      ? "border-sky-400 bg-sky-500/15"
+                      : "border-zinc-800 bg-zinc-900 hover:border-sky-500/70 hover:bg-zinc-800"
+                  }`}
+                  aria-busy={isNavigating}
+                >
+                  <img
+                    src={weapon.icon}
+                    alt={weapon.name}
+                    className="h-10 w-10 rounded bg-zinc-800"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-bold text-zinc-100">
+                      {weapon.name}
+                    </div>
+                    <div className="mt-1 text-xs text-zinc-400">
+                      {weapon.type}
+                      {weapon.element && ` - ${weapon.element}`}
+                      {weapon.ammoType && ` - ${weapon.ammoType}`}
+                    </div>
                   </div>
-                  <div className="mt-1 text-xs text-zinc-400">
-                    {weapon.type}
-                    {weapon.element && ` - ${weapon.element}`}
-                    {weapon.ammoType && ` - ${weapon.ammoType}`}
-                  </div>
-                </div>
-              </Link>
-            ))}
+                  {isNavigating && (
+                    <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-sky-100/30 border-t-sky-100" />
+                  )}
+                </Link>
+              );
+            })}
       </div>
     </section>
   );

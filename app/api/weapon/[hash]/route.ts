@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getManifest, getStatDefinitions } from "@/lib/bungie";
+import { getManifestComponent, getStatDefinitions } from "@/lib/bungie";
 
 const BUNGIE_BASE = "https://www.bungie.net";
 
@@ -355,6 +355,20 @@ function isEnhancementPlug(plug: WeaponPlug) {
   );
 }
 
+function canUseAdeptMods(weapon: DestinyItem) {
+  const name = weapon.displayProperties?.name?.toLowerCase() ?? "";
+
+  return name.includes("(adept)") || name.endsWith(" adept");
+}
+
+function isEligibleMod(plug: WeaponPlug, weapon: DestinyItem) {
+  const name = plug.name.toLowerCase();
+  const category = plug.plugCategoryIdentifier.toLowerCase();
+  const isAdeptMod = name.includes("adept") || category.includes("adept");
+
+  return !isAdeptMod || canUseAdeptMods(weapon);
+}
+
 function isOriginGroup(plugs: WeaponPlug[]) {
   const text = plugs
     .map((plug) => `${plug.name} ${plug.type} ${plug.plugCategoryIdentifier}`)
@@ -537,36 +551,20 @@ export async function GET(
 ) {
   try {
     const { hash } = await params;
-    const manifest = await getManifest();
-    const paths = manifest.Response.jsonWorldComponentContentPaths.en;
-
-    const itemResponse = await fetch(
-      `${BUNGIE_BASE}${paths.DestinyInventoryItemDefinition}`,
-      { cache: "no-store" }
-    );
-
-    const damageResponse = await fetch(
-      `${BUNGIE_BASE}${paths.DestinyDamageTypeDefinition}`,
-      { cache: "no-store" }
-    );
-
-    const plugSetResponse = await fetch(
-      `${BUNGIE_BASE}${paths.DestinyPlugSetDefinition}`,
-      { cache: "no-store" }
-    );
-
-    const statGroupResponse = await fetch(
-      `${BUNGIE_BASE}${paths.DestinyStatGroupDefinition}`,
-      { cache: "no-store" }
-    );
-
-    const items = (await itemResponse.json()) as Record<string, DestinyItem>;
-    const damageTypes =
-      (await damageResponse.json()) as Record<string, DamageTypeDefinition>;
-    const plugSets =
-      (await plugSetResponse.json()) as Record<string, PlugSetDefinition>;
-    const statGroups =
-      (await statGroupResponse.json()) as Record<string, StatGroupDefinition>;
+    const [items, damageTypes, plugSets, statGroups] = await Promise.all([
+      getManifestComponent<Record<string, DestinyItem>>(
+        "DestinyInventoryItemDefinition"
+      ),
+      getManifestComponent<Record<string, DamageTypeDefinition>>(
+        "DestinyDamageTypeDefinition"
+      ),
+      getManifestComponent<Record<string, PlugSetDefinition>>(
+        "DestinyPlugSetDefinition"
+      ),
+      getManifestComponent<Record<string, StatGroupDefinition>>(
+        "DestinyStatGroupDefinition"
+      ),
+    ]);
     const enhancedPlugMap = buildEnhancedPlugMap(items);
 
     const weapon = items[hash];
@@ -705,6 +703,7 @@ export async function GET(
         .filter((plug) => !isBadPlug(plug))
         .filter((plug) => !isBadMod(plug))
         .filter((plug) => isMod(plug))
+        .filter((plug) => isEligibleMod(plug, weapon))
     );
 
     const exoticPerks =
