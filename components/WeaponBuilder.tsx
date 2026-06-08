@@ -604,8 +604,8 @@ export default function WeaponBuilder({ weapon }: WeaponBuilderProps) {
         </div>
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[390px_1fr_360px]">
-          <section className="space-y-4">
-            <div className="rounded-lg border border-zinc-700 bg-zinc-900 p-3">
+          <section className="contents xl:block xl:space-y-4">
+            <div className="order-1 rounded-lg border border-zinc-700 bg-zinc-900 p-3 xl:order-none">
               <div className="flex items-center gap-3">
                 <img
                   src={weapon.icon}
@@ -624,7 +624,7 @@ export default function WeaponBuilder({ weapon }: WeaponBuilderProps) {
               </div>
             </div>
 
-            <div className="rounded-lg border border-zinc-700 bg-zinc-900 p-4">
+            <div className="order-3 rounded-lg border border-zinc-700 bg-zinc-900 p-4 xl:order-none">
               <h2 className="mb-4 text-xl font-bold">Stats</h2>
 
               <div className="grid gap-2.5">
@@ -702,7 +702,7 @@ export default function WeaponBuilder({ weapon }: WeaponBuilderProps) {
               </div>
             </div>
 
-            <div className="rounded-lg border border-zinc-700 bg-zinc-900 p-4">
+            <div className="order-7 rounded-lg border border-zinc-700 bg-zinc-900 p-4 xl:order-none">
               <h2 className="mb-4 text-xl font-bold">Weapon Mods</h2>
 
               <div className="max-h-72 overflow-y-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -764,8 +764,8 @@ export default function WeaponBuilder({ weapon }: WeaponBuilderProps) {
             </div>
           </section>
 
-          <section className="space-y-4">
-            <div className="rounded-lg border border-zinc-700 bg-zinc-900 p-4">
+          <section className="contents xl:block xl:space-y-4">
+            <div className="order-4 rounded-lg border border-zinc-700 bg-zinc-900 p-4 xl:order-none">
               <div className="mb-4 flex items-center justify-between gap-4">
                 <h2 className="text-xl font-bold">Perks</h2>
 
@@ -792,7 +792,7 @@ export default function WeaponBuilder({ weapon }: WeaponBuilderProps) {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 gap-3 pt-1 md:grid-cols-5">
+              <div className="grid grid-cols-5 gap-2 pt-1 md:gap-3">
                 {(weapon.perkColumns ?? []).map((column, columnIndex) => (
                   <div key={column.name}>
                     <div className="grid gap-2.5">
@@ -858,7 +858,7 @@ export default function WeaponBuilder({ weapon }: WeaponBuilderProps) {
               </div>
             </div>
 
-            <div className="rounded-lg border border-zinc-700 bg-zinc-900 p-4">
+            <div className="order-5 rounded-lg border border-zinc-700 bg-zinc-900 p-4 xl:order-none">
               <h2 className="mb-4 text-xl font-bold">Masterwork</h2>
 
               <div className="flex flex-wrap gap-2">
@@ -908,8 +908,8 @@ export default function WeaponBuilder({ weapon }: WeaponBuilderProps) {
             </div>
           </section>
 
-          <aside className="space-y-4">
-            <div className="h-fit rounded-lg border border-zinc-700 bg-zinc-900 p-4">
+          <aside className="contents xl:block xl:space-y-4">
+            <div className="order-2 h-fit rounded-lg border border-zinc-700 bg-zinc-900 p-4 xl:order-none">
               <div className="flex min-h-[180px] items-center justify-center">
                 {weapon.screenshot && !modelImageFailed ? (
                   <img

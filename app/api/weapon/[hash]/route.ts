@@ -257,6 +257,7 @@ function isBadPlug(plug: WeaponPlug) {
     name.includes("empty") ||
     name === "origin trait" ||
     name === "random masterwork" ||
+    name === "extract pattern" ||
     name.includes("default ornament") ||
     name.includes("deepsight") ||
     name.includes("weapon level") ||
@@ -299,6 +300,7 @@ function isBadMod(plug: WeaponPlug) {
     name.includes("enhanced intrinsic") ||
     name === "random mod" ||
     name === "random masterwork" ||
+    name === "extract pattern" ||
     name.includes("tier 1") ||
     name.includes("tier 2") ||
     name.includes("tier 3") ||

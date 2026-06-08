@@ -226,6 +226,7 @@ function isBadPlug(plug: WeaponPlug) {
     !name ||
     name.includes("empty") ||
     name === "origin trait" ||
+    name === "extract pattern" ||
     name.includes("default ornament") ||
     name.includes("deepsight") ||
     name.includes("weapon level") ||

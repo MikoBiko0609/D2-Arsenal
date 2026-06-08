@@ -13,19 +13,19 @@ export default function LoadingWeaponPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[390px_1fr_360px]">
-          <section className="space-y-4">
-            <div className="h-24 animate-pulse rounded-lg border border-zinc-800 bg-zinc-900" />
-            <div className="h-[360px] animate-pulse rounded-lg border border-zinc-800 bg-zinc-900" />
-            <div className="h-72 animate-pulse rounded-lg border border-zinc-800 bg-zinc-900" />
+          <section className="contents xl:block xl:space-y-4">
+            <div className="order-1 h-24 animate-pulse rounded-lg border border-zinc-800 bg-zinc-900 xl:order-none" />
+            <div className="order-3 h-[360px] animate-pulse rounded-lg border border-zinc-800 bg-zinc-900 xl:order-none" />
+            <div className="order-6 h-72 animate-pulse rounded-lg border border-zinc-800 bg-zinc-900 xl:order-none" />
           </section>
 
-          <section className="space-y-4">
-            <div className="h-[520px] animate-pulse rounded-lg border border-zinc-800 bg-zinc-900" />
-            <div className="h-32 animate-pulse rounded-lg border border-zinc-800 bg-zinc-900" />
+          <section className="contents xl:block xl:space-y-4">
+            <div className="order-4 h-[520px] animate-pulse rounded-lg border border-zinc-800 bg-zinc-900 xl:order-none" />
+            <div className="order-5 h-32 animate-pulse rounded-lg border border-zinc-800 bg-zinc-900 xl:order-none" />
           </section>
 
-          <aside>
-            <div className="h-[520px] animate-pulse rounded-lg border border-zinc-800 bg-zinc-900" />
+          <aside className="contents xl:block">
+            <div className="order-2 h-[520px] animate-pulse rounded-lg border border-zinc-800 bg-zinc-900 xl:order-none" />
           </aside>
         </div>
       </div>

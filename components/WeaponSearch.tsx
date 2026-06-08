@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { loadWeaponSearchData } from "@/lib/clientWeaponData";
 
 type FilterKey =
@@ -159,6 +159,7 @@ function weaponMatchesFilter(weapon: Weapon, filter: FilterDefinition, values: s
 
 export default function WeaponSearch() {
   const router = useRouter();
+  const pathname = usePathname();
   const [weapons, setWeapons] = useState<Weapon[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -192,7 +193,19 @@ export default function WeaponSearch() {
   }, []);
 
   useEffect(() => {
-    function handlePointerDown(event: PointerEvent) {
+    setOpen(false);
+    setActiveFilter(null);
+    inputRef.current?.blur();
+  }, [pathname]);
+
+  useEffect(() => {
+    function closeSearch() {
+      setOpen(false);
+      setActiveFilter(null);
+      inputRef.current?.blur();
+    }
+
+    function handleOutsidePointer(event: PointerEvent) {
       if (!open) return;
       const target = event.target;
 
@@ -201,14 +214,13 @@ export default function WeaponSearch() {
         containerRef.current &&
         !containerRef.current.contains(target)
       ) {
-        setOpen(false);
-        setActiveFilter(null);
-        inputRef.current?.blur();
+        closeSearch();
       }
     }
 
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("pointerdown", handleOutsidePointer, true);
+    return () =>
+      document.removeEventListener("pointerdown", handleOutsidePointer, true);
   }, [open]);
 
   const selectedFilterCount = FILTERS.reduce(
