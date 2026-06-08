@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 import WeaponBuilder from "@/components/WeaponBuilder";
+import { getWeaponDetails } from "@/lib/weaponDetails";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -14,23 +14,18 @@ type WeaponPageProps = {
 export default async function WeaponPage({ params }: WeaponPageProps) {
   const { hash } = await params;
 
-  const headersList = await headers();
-  const host = headersList.get("host") ?? "localhost:3000";
-  const protocol = host.includes("localhost") ? "http" : "https";
+  try {
+    const weapon = await getWeaponDetails(hash);
 
-  const response = await fetch(`${protocol}://${host}/api/weapon/${hash}`, {
-    cache: "no-store",
-    next: {
-      revalidate: 0,
-    },
-    headers: {
-      "Cache-Control": "no-store",
-    },
-  });
+    return (
+      <WeaponBuilder
+        key={`${weapon.hash}-${weapon.screenshot}`}
+        weapon={weapon}
+      />
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "fetch failed";
 
-  const weapon = await response.json();
-
-  if (!response.ok) {
     return (
       <main className="min-h-screen bg-zinc-950 text-white p-8">
         <div className="max-w-5xl mx-auto">
@@ -39,11 +34,10 @@ export default async function WeaponPage({ params }: WeaponPageProps) {
           </Link>
 
           <div className="mt-8 bg-zinc-900 border border-red-800 rounded-xl p-6 text-red-300">
-            {weapon.error ?? "Failed to load weapon."}
+            {message}
           </div>
         </div>
       </main>
     );
   }
-  return <WeaponBuilder key={`${weapon.hash}-${weapon.screenshot}`} weapon={weapon} />;
 }

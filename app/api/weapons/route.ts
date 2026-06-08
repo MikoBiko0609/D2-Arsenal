@@ -90,6 +90,11 @@ type ScoredWeaponSearchResult = WeaponSearchResult & {
   score: number;
 };
 
+const weaponSearchCache = new WeakMap<
+  Record<string, DestinyItem>,
+  WeaponSearchResult[]
+>();
+
 const AMMO_TYPES: Record<number, string> = {
   1: "Primary",
   2: "Special",
@@ -459,6 +464,16 @@ export async function GET() {
       ),
     ]);
 
+    const cachedWeapons = weaponSearchCache.get(items);
+
+    if (cachedWeapons) {
+      return NextResponse.json(cachedWeapons, {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      });
+    }
+
     const weapons = Object.values(items)
       .filter((item) => {
         return (
@@ -481,6 +496,8 @@ export async function GET() {
         delete (weapon as Partial<ScoredWeaponSearchResult>).score;
         return weapon as WeaponSearchResult;
       });
+
+    weaponSearchCache.set(items, weapons);
 
     return NextResponse.json(weapons, {
       headers: {

@@ -3,7 +3,7 @@ const API_KEY = process.env.BUNGIE_API_KEY;
 const BASE_URL = "https://www.bungie.net/Platform";
 const BUNGIE_BASE = "https://www.bungie.net";
 const MANIFEST_TTL_MS = 60 * 1000;
-const COMPONENT_TTL_MS = 5 * 60 * 1000;
+const COMPONENT_TTL_MS = 24 * 60 * 60 * 1000;
 
 type ManifestResponse = {
   Response: {
