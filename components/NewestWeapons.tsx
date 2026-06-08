@@ -40,6 +40,22 @@ export default function NewestWeapons() {
     loadWeapons();
   }, []);
 
+  useEffect(() => {
+    function clearNavigationState() {
+      setNavigatingHash(null);
+    }
+
+    window.addEventListener("pageshow", clearNavigationState);
+    window.addEventListener("focus", clearNavigationState);
+    document.addEventListener("visibilitychange", clearNavigationState);
+
+    return () => {
+      window.removeEventListener("pageshow", clearNavigationState);
+      window.removeEventListener("focus", clearNavigationState);
+      document.removeEventListener("visibilitychange", clearNavigationState);
+    };
+  }, []);
+
   const newestWeapons = useMemo(() => {
     const latestReleaseVersion = Math.max(
       0,

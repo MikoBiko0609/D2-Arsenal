@@ -195,8 +195,25 @@ export default function WeaponSearch() {
   useEffect(() => {
     setOpen(false);
     setActiveFilter(null);
+    setNavigatingHash(null);
     inputRef.current?.blur();
   }, [pathname]);
+
+  useEffect(() => {
+    function clearNavigationState() {
+      setNavigatingHash(null);
+    }
+
+    window.addEventListener("pageshow", clearNavigationState);
+    window.addEventListener("focus", clearNavigationState);
+    document.addEventListener("visibilitychange", clearNavigationState);
+
+    return () => {
+      window.removeEventListener("pageshow", clearNavigationState);
+      window.removeEventListener("focus", clearNavigationState);
+      document.removeEventListener("visibilitychange", clearNavigationState);
+    };
+  }, []);
 
   useEffect(() => {
     function closeSearch() {

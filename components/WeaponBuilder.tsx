@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { type MouseEvent, useMemo, useState } from "react";
+import {
+  type MouseEvent,
+  type Ref,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { getPerkCompendiumEntry } from "@/lib/perkCompendium";
 import WeaponSearch from "@/components/WeaponSearch";
 
@@ -426,7 +433,13 @@ function PerkInfoCard({
   );
 }
 
-function FloatingPerkInfoCard({ info }: { info: FloatingPerkInfo }) {
+function FloatingPerkInfoCard({
+  info,
+  cardRef,
+}: {
+  info: FloatingPerkInfo;
+  cardRef?: Ref<HTMLElement>;
+}) {
   const isEnhancedPlug = info.plug.type.toLowerCase().startsWith("enhanced");
   const compendiumEntry = getCompendiumEntry(info.plug);
   const description =
@@ -435,7 +448,8 @@ function FloatingPerkInfoCard({ info }: { info: FloatingPerkInfo }) {
 
   return (
     <article
-      className="pointer-events-none fixed z-[100] max-h-[calc(100vh-2rem)] w-[min(24rem,calc(100vw-2rem))] -translate-y-1/2 overflow-hidden rounded-lg border border-zinc-600 bg-zinc-950 text-left shadow-2xl shadow-black/60"
+      ref={cardRef}
+      className="fixed z-[100] max-h-[calc(100vh-2rem)] w-[min(24rem,calc(100vw-2rem))] -translate-y-1/2 overflow-hidden rounded-lg border border-zinc-600 bg-zinc-950 text-left shadow-2xl shadow-black/60"
       style={{
         left: info.left,
         top: info.top,
@@ -501,6 +515,7 @@ export default function WeaponBuilder({ weapon }: WeaponBuilderProps) {
   const [floatingInfo, setFloatingInfo] = useState<FloatingPerkInfo | null>(
     null
   );
+  const floatingInfoRef = useRef<HTMLElement | null>(null);
 
   const selectedPlugList = useMemo(() => {
     return Object.values(selectedPerks);
@@ -560,13 +575,39 @@ export default function WeaponBuilder({ weapon }: WeaponBuilderProps) {
     });
   }
 
+  useEffect(() => {
+    function handleOutsidePointer(event: PointerEvent) {
+      if (!floatingInfo) return;
+      const target = event.target;
+
+      if (
+        target instanceof Node &&
+        floatingInfoRef.current &&
+        !floatingInfoRef.current.contains(target)
+      ) {
+        setFloatingInfo(null);
+      }
+    }
+
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    return () =>
+      document.removeEventListener("pointerdown", handleOutsidePointer);
+  }, [floatingInfo]);
+
+  function isTouchLikeDevice() {
+    return (
+      window.matchMedia("(hover: none)").matches ||
+      window.matchMedia("(pointer: coarse)").matches
+    );
+  }
+
   function showFloatingInfo(
-    event: MouseEvent<HTMLButtonElement>,
+    element: HTMLElement,
     group: string,
     plug: WeaponPlug,
     statChanges: string[]
   ) {
-    const rect = event.currentTarget.getBoundingClientRect();
+    const rect = element.getBoundingClientRect();
     const margin = 16;
     const cardWidth = Math.min(384, window.innerWidth - margin * 2);
     const estimatedCardHeight = 360;
@@ -587,6 +628,26 @@ export default function WeaponBuilder({ weapon }: WeaponBuilderProps) {
       left,
       top,
     });
+  }
+
+  function showFloatingInfoFromEvent(
+    event: MouseEvent<HTMLButtonElement>,
+    group: string,
+    plug: WeaponPlug,
+    statChanges: string[]
+  ) {
+    showFloatingInfo(event.currentTarget, group, plug, statChanges);
+  }
+
+  function showFloatingInfoOnTap(
+    event: MouseEvent<HTMLButtonElement>,
+    group: string,
+    plug: WeaponPlug,
+    statChanges: string[]
+  ) {
+    if (!isTouchLikeDevice()) return;
+
+    showFloatingInfo(event.currentTarget, group, plug, statChanges);
   }
 
   return (
@@ -733,7 +794,7 @@ export default function WeaponBuilder({ weapon }: WeaponBuilderProps) {
                         <button
                           type="button"
                           onMouseEnter={(event) =>
-                            showFloatingInfo(
+                            showFloatingInfoFromEvent(
                               event,
                               "Weapon Mod",
                               plug,
@@ -742,7 +803,15 @@ export default function WeaponBuilder({ weapon }: WeaponBuilderProps) {
                           }
                           onMouseLeave={() => setFloatingInfo(null)}
                           onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => selectPlug("Mod", plug)}
+                          onClick={(event) => {
+                            selectPlug("Mod", plug);
+                            showFloatingInfoOnTap(
+                              event,
+                              "Weapon Mod",
+                              plug,
+                              statChanges
+                            );
+                          }}
                           className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 ${
                             selected
                               ? "border-sky-400 bg-sky-500/30"
@@ -824,7 +893,15 @@ export default function WeaponBuilder({ weapon }: WeaponBuilderProps) {
                             <button
                               type="button"
                               onMouseDown={(event) => event.preventDefault()}
-                              onClick={() => selectPlug(column.name, perk)}
+                              onClick={(event) => {
+                                selectPlug(column.name, perk);
+                                showFloatingInfoOnTap(
+                                  event,
+                                  column.name,
+                                  displayPerk,
+                                  statChanges
+                                );
+                              }}
                               title={displayPerk.name}
                               className={`relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border p-1 ${
                                 selected
@@ -1024,7 +1101,12 @@ export default function WeaponBuilder({ weapon }: WeaponBuilderProps) {
         </div>
       </div>
 
-      {floatingInfo && <FloatingPerkInfoCard info={floatingInfo} />}
+      {floatingInfo && (
+        <FloatingPerkInfoCard
+          info={floatingInfo}
+          cardRef={floatingInfoRef}
+        />
+      )}
     </main>
   );
 }
