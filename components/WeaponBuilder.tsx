@@ -805,12 +805,16 @@ export default function WeaponBuilder({ weapon }: WeaponBuilderProps) {
                           onMouseDown={(event) => event.preventDefault()}
                           onClick={(event) => {
                             selectPlug("Mod", plug);
-                            showFloatingInfoOnTap(
-                              event,
-                              "Weapon Mod",
-                              plug,
-                              statChanges
-                            );
+                            if (selected) {
+                              setFloatingInfo(null);
+                            } else {
+                              showFloatingInfoOnTap(
+                                event,
+                                "Weapon Mod",
+                                plug,
+                                statChanges
+                              );
+                            }
                           }}
                           className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 ${
                             selected
@@ -895,12 +899,16 @@ export default function WeaponBuilder({ weapon }: WeaponBuilderProps) {
                               onMouseDown={(event) => event.preventDefault()}
                               onClick={(event) => {
                                 selectPlug(column.name, perk);
-                                showFloatingInfoOnTap(
-                                  event,
-                                  column.name,
-                                  displayPerk,
-                                  statChanges
-                                );
+                                if (selected) {
+                                  setFloatingInfo(null);
+                                } else {
+                                  showFloatingInfoOnTap(
+                                    event,
+                                    column.name,
+                                    displayPerk,
+                                    statChanges
+                                  );
+                                }
                               }}
                               title={displayPerk.name}
                               className={`relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border p-1 ${
