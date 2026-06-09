@@ -16,7 +16,48 @@ type Weapon = {
   element: string;
   ammoType: string;
   isExotic: boolean;
+  perk1: string[];
+  perk2: string[];
+  hasPerks: string[];
 };
+
+function normalizePerkList(perks: string[]) {
+  return Array.from(
+    new Set(perks.map((perk) => perk.toLowerCase().trim()).filter(Boolean))
+  ).sort();
+}
+
+function getTraitPoolKey(weapon: Weapon) {
+  const perks = weapon.hasPerks.length
+    ? weapon.hasPerks
+    : [...weapon.perk1, ...weapon.perk2];
+
+  return normalizePerkList(perks).join("|");
+}
+
+function hasNewOrChangedTraitPool(weapon: Weapon, allWeapons: Weapon[]) {
+  const olderCopies = allWeapons.filter((candidate) => {
+    return (
+      candidate.hash !== weapon.hash &&
+      candidate.name.toLowerCase().trim() === weapon.name.toLowerCase().trim() &&
+      (candidate.releaseVersion < weapon.releaseVersion ||
+        (candidate.releaseVersion === weapon.releaseVersion &&
+          candidate.manifestIndex < weapon.manifestIndex))
+    );
+  });
+
+  if (olderCopies.length === 0) {
+    return true;
+  }
+
+  const currentTraitPool = getTraitPoolKey(weapon);
+
+  if (!currentTraitPool) {
+    return false;
+  }
+
+  return olderCopies.every((copy) => getTraitPoolKey(copy) !== currentTraitPool);
+}
 
 export default function NewestWeapons() {
   const router = useRouter();
@@ -88,6 +129,11 @@ export default function NewestWeapons() {
         (weapon) =>
           latestReleaseVersion === 0 ||
           weapon.releaseVersion === latestReleaseVersion
+      )
+      .filter(
+        (weapon) =>
+          latestReleaseVersion === 0 ||
+          hasNewOrChangedTraitPool(weapon, weapons)
       )
       .sort(
         (a, b) =>
