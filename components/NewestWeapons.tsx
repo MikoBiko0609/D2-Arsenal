@@ -88,6 +88,12 @@ export default function NewestWeapons() {
       .slice(0, 30);
   }, [weapons]);
 
+  useEffect(() => {
+    newestWeapons.slice(0, 10).forEach((weapon) => {
+      router.prefetch(`/weapon/${weapon.hash}`);
+    });
+  }, [newestWeapons, router]);
+
   return (
     <section className="mt-10">
       <div className="mb-3 flex items-center justify-between gap-4">

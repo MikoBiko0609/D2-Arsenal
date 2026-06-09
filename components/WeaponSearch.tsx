@@ -169,6 +169,7 @@ export default function WeaponSearch() {
   const [open, setOpen] = useState(false);
   const [navigatingHash, setNavigatingHash] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -240,6 +241,10 @@ export default function WeaponSearch() {
       document.removeEventListener("pointerdown", handleOutsidePointer, true);
   }, [open]);
 
+  useEffect(() => {
+    resultsRef.current?.scrollTo({ top: 0 });
+  }, [search, activeFilter, filters]);
+
   const selectedFilterCount = FILTERS.reduce(
     (total, filter) => total + filters[filter.key].length,
     0
@@ -257,6 +262,14 @@ export default function WeaponSearch() {
       })
       .slice(0, 40);
   }, [weapons, search, filters]);
+
+  useEffect(() => {
+    if (!open || activeFilter || loading || error) return;
+
+    filteredWeapons.slice(0, 8).forEach((weapon) => {
+      router.prefetch(`/weapon/${weapon.hash}`);
+    });
+  }, [activeFilter, error, filteredWeapons, loading, open, router]);
 
   const activeOptions = useMemo(() => {
     if (!activeFilter) return [];
@@ -441,7 +454,10 @@ export default function WeaponSearch() {
       </div>
 
       {open && (
-        <div className="absolute left-0 right-0 top-full z-40 mt-3 max-h-[70vh] overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl shadow-black/60 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div
+          ref={resultsRef}
+          className="absolute left-0 right-0 top-full z-40 mt-3 max-h-[min(70vh,34rem)] overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl shadow-black/60 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           {!activeFilter && (
             <div className="border-b border-zinc-800 p-3">
               <div className="mb-2 text-xs uppercase text-zinc-500">
