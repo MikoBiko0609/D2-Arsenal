@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getManifestComponent } from "@/lib/bungie";
+import { getGeneratedWeaponSearchResults } from "@/lib/generatedArsenalCache";
 
 const BUNGIE_BASE = "https://www.bungie.net";
 
@@ -452,6 +453,17 @@ function buildWeaponResult(
 
 export async function GET() {
   try {
+    const generatedWeapons =
+      await getGeneratedWeaponSearchResults<WeaponSearchResult[]>();
+
+    if (generatedWeapons) {
+      return NextResponse.json(generatedWeapons, {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      });
+    }
+
     const [items, plugSets, damageTypes] = await Promise.all([
       getManifestComponent<Record<string, DestinyItem>>(
         "DestinyInventoryItemDefinition"

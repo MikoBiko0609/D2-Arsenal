@@ -7,6 +7,7 @@ const COMPONENT_TTL_MS = 24 * 60 * 60 * 1000;
 
 type ManifestResponse = {
   Response: {
+    version?: string;
     jsonWorldComponentContentPaths: {
       en: Record<string, string>;
     };
@@ -110,6 +111,21 @@ export async function getManifestComponent<T>(
     componentCache.delete(cacheKey);
     throw error;
   }
+}
+
+export async function getManifestCacheKey() {
+  const manifest = await getManifest();
+  const paths = manifest.Response.jsonWorldComponentContentPaths.en;
+
+  return (
+    manifest.Response.version ??
+    [
+      paths.DestinyInventoryItemDefinition,
+      paths.DestinyPlugSetDefinition,
+      paths.DestinyDamageTypeDefinition,
+      paths.DestinyStatGroupDefinition,
+    ].join("|")
+  );
 }
 
 export async function getStatDefinitions() {

@@ -534,7 +534,6 @@ export default function WeaponSearch() {
                         onFocus={() => router.prefetch(href)}
                         onClick={() => {
                           setNavigatingHash(weapon.hash);
-                          setOpen(false);
                         }}
                         className={`relative flex items-center gap-4 rounded-xl border p-4 shadow-lg shadow-black/20 transition ${
                           isNavigating

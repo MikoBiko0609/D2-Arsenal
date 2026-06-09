@@ -1,4 +1,5 @@
-﻿import { getManifestComponent, getStatDefinitions } from "@/lib/bungie";
+import { getManifestComponent, getStatDefinitions } from "@/lib/bungie";
+import { getGeneratedWeaponDetails } from "@/lib/generatedArsenalCache";
 
 const BUNGIE_BASE = "https://www.bungie.net";
 
@@ -549,6 +550,12 @@ function getInvestmentStatTotal(weapon: DestinyItem, statHash: number) {
 }
 
 export async function getWeaponDetails(hash: string) {
+    const generatedDetails = await getGeneratedWeaponDetails(hash);
+
+    if (generatedDetails) {
+      return generatedDetails;
+    }
+
     const [items, damageTypes, plugSets, statGroups] = await Promise.all([
       getManifestComponent<Record<string, DestinyItem>>(
         "DestinyInventoryItemDefinition"
@@ -777,4 +784,5 @@ export async function getWeaponDetails(hash: string) {
     cachedDetailsByHash.set(hash, details);
     return details;
 }
+
 
