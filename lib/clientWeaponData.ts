@@ -2,7 +2,7 @@ let weaponSearchPromise: Promise<unknown> | null = null;
 let weaponSearchData: unknown | null = null;
 
 const STORAGE_KEY = "d2-arsenal.weapon-search-data";
-const STORAGE_TTL_MS = 60 * 60 * 1000;
+const STORAGE_TTL_MS = 5 * 60 * 1000;
 
 type StoredWeaponSearchData = {
   expiresAt: number;

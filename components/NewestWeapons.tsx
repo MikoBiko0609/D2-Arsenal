@@ -60,20 +60,18 @@ export default function NewestWeapons() {
     const latestReleaseVersion = Math.max(
       0,
       ...weapons
-        .filter((weapon) => !weapon.isExotic)
+        .filter((weapon) => weapon.releaseVersion > 0)
         .map((weapon) => weapon.releaseVersion)
     );
     const seenNames = new Set<string>();
 
-    return [...weapons]
-      .filter((weapon) => !weapon.isExotic && weapon.manifestIndex > 0)
-      .filter((weapon) => {
-        if (latestReleaseVersion === 0) {
-          return true;
-        }
-
-        return weapon.releaseVersion === latestReleaseVersion;
-      })
+    const newestList = [...weapons]
+      .filter((weapon) => weapon.manifestIndex > 0)
+      .filter(
+        (weapon) =>
+          latestReleaseVersion === 0 ||
+          weapon.releaseVersion === latestReleaseVersion
+      )
       .sort((a, b) => b.manifestIndex - a.manifestIndex)
       .filter((weapon) => {
         const key = weapon.name.toLowerCase().trim();
@@ -84,8 +82,13 @@ export default function NewestWeapons() {
 
         seenNames.add(key);
         return true;
-      })
-      .slice(0, 30);
+      });
+
+    if (latestReleaseVersion === 0) {
+      return newestList.slice(0, 200);
+    }
+
+    return newestList;
   }, [weapons]);
 
   useEffect(() => {
