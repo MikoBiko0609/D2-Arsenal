@@ -57,32 +57,43 @@ export default function NewestWeapons() {
   }, []);
 
   const newestWeapons = useMemo(() => {
+    const newestByName = new Map<string, Weapon>();
+
+    weapons.forEach((weapon) => {
+      if (weapon.manifestIndex <= 0) return;
+
+      const key = weapon.name.toLowerCase().trim();
+      const current = newestByName.get(key);
+
+      if (
+        !current ||
+        weapon.releaseVersion > current.releaseVersion ||
+        (weapon.releaseVersion === current.releaseVersion &&
+          weapon.manifestIndex > current.manifestIndex)
+      ) {
+        newestByName.set(key, weapon);
+      }
+    });
+
+    const newestVersions = Array.from(newestByName.values());
     const latestReleaseVersion = Math.max(
       0,
-      ...weapons
+      ...newestVersions
         .filter((weapon) => weapon.releaseVersion > 0)
         .map((weapon) => weapon.releaseVersion)
     );
-    const seenNames = new Set<string>();
 
-    const newestList = [...weapons]
-      .filter((weapon) => weapon.manifestIndex > 0)
+    const newestList = newestVersions
       .filter(
         (weapon) =>
           latestReleaseVersion === 0 ||
           weapon.releaseVersion === latestReleaseVersion
       )
-      .sort((a, b) => b.manifestIndex - a.manifestIndex)
-      .filter((weapon) => {
-        const key = weapon.name.toLowerCase().trim();
-
-        if (seenNames.has(key)) {
-          return false;
-        }
-
-        seenNames.add(key);
-        return true;
-      });
+      .sort(
+        (a, b) =>
+          b.releaseVersion - a.releaseVersion ||
+          b.manifestIndex - a.manifestIndex
+      );
 
     if (latestReleaseVersion === 0) {
       return newestList.slice(0, 200);
